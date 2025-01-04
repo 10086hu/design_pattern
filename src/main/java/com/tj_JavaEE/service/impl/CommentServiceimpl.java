@@ -1,47 +1,47 @@
 package com.tj_JavaEE.service.impl;
 
-import com.tj_JavaEE.dto.Cmt;
 import com.tj_JavaEE.dto.Commentcontent;
 import com.tj_JavaEE.entity.Comment;
+import com.tj_JavaEE.factory.CommentFactory;
 import com.tj_JavaEE.mapper.CommentMapper;
-import com.tj_JavaEE.service.CommentService;
+import com.tj_JavaEE.service.ICommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-
 @Service
-public class CommentServiceimpl implements CommentService {
-
+public class CommentServiceImpl implements ICommentService {
+    
     @Autowired
     private CommentMapper commentMapper;
-
+    
+    @Autowired
+    private CommentFactory commentFactory;
+    
     @Override
-    public void addComment(Commentcontent commentcontent ) {
-        Comment comment = new Comment();
-        comment.setContent(commentcontent.getContent());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime time = LocalDateTime.parse(commentcontent.getCommentTime(), formatter);
-        comment.setCommenterId((int) commentcontent.getCommenterId());
-        comment.setCommentTime(time);
-        comment.setPostId(commentcontent.getPostId());
-        comment.setDislikeCount(0);
-        comment.setLikeCount(0);
+    public void addComment(Commentcontent commentContent) {
+        // 使用工厂创建评论对象
+        Comment comment = commentFactory.createComment(commentContent);
         commentMapper.addComment(comment);
     }
-
+    
     @Override
-    public List<Cmt> getCommentsByPostId(long postId) {
+    public List<Commentcontent> getCommentsByPostId(long postId) {
         return commentMapper.getCommentsByPostId(postId);
     }
-
+    
     @Override
-    public void likeComment(long commentId){  commentMapper.likeComment(commentId);}
+    public void likeComment(long commentId) {
+        commentMapper.likeComment(commentId);
+    }
+    
     @Override
-    public void dislikeComment(long commentId){  commentMapper.dislikeComment(commentId);}
+    public void dislikeComment(long commentId) {
+        commentMapper.dislikeComment(commentId);
+    }
+    
     @Override
-    public void deleteComment(long commentId){  commentMapper.deleteComment(commentId);}
-
+    public void deleteComment(long commentId) {
+        commentMapper.deleteComment(commentId);
+    }
 }

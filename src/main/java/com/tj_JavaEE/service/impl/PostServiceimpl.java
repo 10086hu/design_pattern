@@ -1,3 +1,4 @@
+//todo
 package com.tj_JavaEE.service.impl;
 
 import com.tj_JavaEE.dto.AuditPostInfo;
@@ -9,9 +10,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
-public class PostServiceimpl implements PostService {
+public class PostServiceImpl implements PostService {
     @Autowired
     private PostMapper postMapper;
     @Autowired
@@ -71,5 +73,41 @@ public class PostServiceimpl implements PostService {
     @Override
     public void deletePost(Long postId){
         postMapper.deletePost(postId);
+    }
+
+    public Map<String, Object> getPostWithDecorators(Pst post) {
+        // 创建基础帖子
+        PostComponent basePost = new BasePost(post);
+        
+        // 根据条件添加装饰器
+        if (isTopPost(post)) {
+            basePost = new TopPostDecorator(basePost);
+        }
+        
+        if (isHotPost(post)) {
+            basePost = new HotPostDecorator(basePost, calculateHeatValue(post));
+        }
+        
+        // 返回处理后的帖子信息
+        return basePost.getDisplayInfo();
+    }
+    
+    private boolean isTopPost(Pst post) {
+        // 判断是否是置顶帖子的逻辑
+        return post.getIsTop() != null && post.getIsTop();
+    }
+    
+    private boolean isHotPost(Pst post) {
+        // 判断是否是热门帖子的逻辑
+        return calculateHeatValue(post) > 100;
+    }
+    
+    private int calculateHeatValue(Pst post) {
+        // 计算热度值的逻辑
+        int heatValue = 0;
+        heatValue += post.getLikeCount() * 2;
+        heatValue += post.getCommentCount() * 3;
+        heatValue += post.getViewCount();
+        return heatValue;
     }
 }

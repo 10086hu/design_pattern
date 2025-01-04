@@ -19,4 +19,9 @@ public class User implements Serializable {
     private String password;
     private String email;
     private String status;
+    private Integer score;
+
+    public void addScore(int points) {
+        this.score = (this.score == null ? 0 : this.score) + points;
+    }
 }

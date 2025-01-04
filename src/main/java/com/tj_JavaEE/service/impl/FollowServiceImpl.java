@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class FollowServiceImpl implements FollowService {
+public class  FollowServiceImpl implements FollowService {
 
     @Autowired
     private FollowMapper followMapper;

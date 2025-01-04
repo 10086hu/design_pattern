@@ -2,12 +2,18 @@ package com.tj_JavaEE.controller;
 
 import com.tj_JavaEE.dto.Commentcontent;
 import com.tj_JavaEE.entity.Result;
-import com.tj_JavaEE.service.CommentService;
+import com.tj_JavaEE.service.ICommentService;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.tj_JavaEE.util.JwtUtils;
+import com.tj_JavaEE.handler.CommentHandler;
+import com.tj_JavaEE.handler.SensitiveWordHandler;
+import com.tj_JavaEE.handler.ContentLengthHandler;
+import com.tj_JavaEE.interpreter.Expression;
+import com.tj_JavaEE.interpreter.ContainsWordExpression;
+import com.tj_JavaEE.interpreter.LengthExpression;
 
 import java.util.List;
 
@@ -15,18 +21,37 @@ import java.util.List;
 @RestController
 @RequestMapping("/comment")
 public class CommentController {
+    private final ICommentService commentService;
+    
     @Autowired
-    private CommentService commentService;
+    public CommentController(ICommentService commentService) {
+        this.commentService = commentService; // 注入代理对象
+    }
+
+    private final CommentHandler handler;
+
+    public CommentController() {
+        // 构建责任链
+        CommentHandler sensitiveWordHandler = new SensitiveWordHandler();
+        CommentHandler contentLengthHandler = new ContentLengthHandler();
+        
+        // 设置处理顺序：敏感词检查 -> 内容长度检查
+        sensitiveWordHandler.setNext(contentLengthHandler);
+        this.handler = sensitiveWordHandler; // 保存责任链的起点
+    }
 
     @PostMapping("/{postId}")
-    public Result createComment(@PathVariable long postId , @RequestBody Commentcontent comment , @RequestHeader("Authorization") String token) {
+    public Result createComment(@PathVariable long postId, @RequestBody Commentcontent comment, 
+                              @RequestHeader("Authorization") String token) {
         token = token.substring(7);
         Claims claim = JwtUtils.parseJwt(token);
-        int useId = claim.get("userId", Integer.class);
-        comment.setCommenterId(useId);
+        int userId = claim.get("userId", Integer.class);
+        comment.setCommenterId(userId);
         comment.setPostId(postId);
+        
+        // 使用代理服务
         commentService.addComment(comment);
-        return new Result();
+        return Result.success();
     }
 
     @GetMapping("/{postId}")
@@ -55,4 +80,20 @@ public class CommentController {
         return Result.success();
     }
 
+    @PostMapping("/add")
+    public Result addComment(@RequestBody Comment comment) {
+        Expression containsSensitiveWord = new ContainsWordExpression("敏感词");
+        Expression validLength = new LengthExpression(1, 200);
+
+        if (containsSensitiveWord.interpret(comment.getContent())) {
+            return Result.error("评论包含敏感词");
+        }
+
+        if (!validLength.interpret(comment.getContent())) {
+            return Result.error("评论长度不合规");
+        }
+
+        // 其余处理逻辑...
+        return Result.success();
+    }
 }

@@ -18,7 +18,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @CrossOrigin
-public class RegisterController {
+public class  RegisterController {
 
     @Autowired
     private RegisterService registerService;
