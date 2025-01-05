@@ -11,9 +11,6 @@ import com.tj_JavaEE.util.JwtUtils;
 import com.tj_JavaEE.handler.CommentHandler;
 import com.tj_JavaEE.handler.SensitiveWordHandler;
 import com.tj_JavaEE.handler.ContentLengthHandler;
-import com.tj_JavaEE.interpreter.Expression;
-import com.tj_JavaEE.interpreter.ContainsWordExpression;
-import com.tj_JavaEE.interpreter.LengthExpression;
 
 import java.util.List;
 
@@ -82,17 +79,10 @@ public class CommentController {
 
     @PostMapping("/add")
     public Result addComment(@RequestBody Comment comment) {
-        Expression containsSensitiveWord = new ContainsWordExpression("敏感词");
-        Expression validLength = new LengthExpression(1, 200);
-
-        if (containsSensitiveWord.interpret(comment.getContent())) {
-            return Result.error("评论包含敏感词");
+        if (!handler.handle(comment.getContent())) {
+            return Result.error("评论内容不合规");
         }
-
-        if (!validLength.interpret(comment.getContent())) {
-            return Result.error("评论长度不合规");
-        }
-
+        
         // 其余处理逻辑...
         return Result.success();
     }

@@ -1,62 +1,42 @@
 package com.tj_JavaEE.service.impl;
 
-import com.tj_JavaEE.dto.Pst;
-import com.tj_JavaEE.dto.CategoryAddInfo;
 import com.tj_JavaEE.entity.Category;
-import com.tj_JavaEE.mapper.CategoryAdminMapper;
-import com.tj_JavaEE.mapper.CategoryMapper;
-import com.tj_JavaEE.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.tj_JavaEE.interpreter.*;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.UUID;
-
 @Service
-public class CategoryServiceimpl implements CategoryService {
-    @Autowired
-    private CategoryMapper categoryMapper;
-    @Autowired
-    private CategoryAdminMapper categoryAdminMapper;
-
-    private static final String baseUrl = "/src/main/resources/static/";
-
-    @Override
-    public void categoryAdd(CategoryAddInfo categoryAddInfo) {
-        String uniqueFileName = UUID.randomUUID().toString() + "_" + categoryAddInfo.getImage().getOriginalFilename();
-        String followUrl = "pictures/category/"+uniqueFileName;
-        String filePath = new File("").getAbsolutePath()+baseUrl+followUrl;
-
-        File dest = new File(filePath);
-        if (!dest.getParentFile().exists()){
-            dest.getParentFile().mkdirs();
+public class CategoryServiceImpl {
+    
+    public boolean validateCategory(Category category) {
+        // 创建表达式
+        CategoryExpression levelExpr = new CategoryLevelExpression(1, 3);
+        CategoryExpression statusExpr = new CategoryStatusExpression("active");
+        
+        // 组合表达式
+        CategoryExpression finalExpr = new AndExpression(levelExpr, statusExpr);
+        
+        // 解释执行
+        return finalExpr.interpret(category);
+    }
+    
+    public String getCategoryDisplayName(Category category) {
+        StringBuilder displayName = new StringBuilder();
+        
+        // 根据级别添加前缀
+        if (category.getLevel() == 1) {
+            displayName.append("[主分类]");
+        } else if (category.getLevel() == 2) {
+            displayName.append("[子分类]");
         }
-        try {
-            categoryAddInfo.getImage().transferTo(dest);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        
+        displayName.append(category.getName());
+        
+        // 根据状态添加后缀
+        if ("inactive".equals(category.getStatus())) {
+            displayName.append("(已禁用)");
         }
-
-        Category category=new Category();
-        category.setCategoryName(categoryAddInfo.getCategoryName());
-        category.setCategoryDescription(categoryAddInfo.getDescription());
-        category.setCategoryImageUrl(followUrl);
-        categoryAdminMapper.insert(category);
+        
+        return displayName.toString();
     }
-
-    @Override
-    public List<com.tj_JavaEE.dto.Category> getAllCategories(){
-        return categoryMapper.getAll();
-    }
-
-    @Override
-    public List<Pst> getPostsByCategory(long categoryId){
-        return categoryMapper.getPostsByCategory(categoryId);
-    }
-
-
 }
 

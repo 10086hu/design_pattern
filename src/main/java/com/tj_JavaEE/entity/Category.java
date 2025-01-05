@@ -24,4 +24,11 @@ public class Category {
 
     @TableField("category_image_url")
     private String categoryImageUrl;
+
+    private Integer id;
+    private String name;
+    private String displayName;
+    private Integer level;
+    private String status;
+    private Integer parentId;
 }
